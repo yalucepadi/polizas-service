@@ -15,14 +15,11 @@ import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.reactive.server.WebTestClient;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
-
-import java.math.BigDecimal;
 import java.time.LocalDate;
-
 import static org.hamcrest.Matchers.hasSize;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.when;
+
 @ExtendWith(MockitoExtension.class)
 @WebFluxTest(PolizaController.class)
 class PolizaControllerTest {
@@ -61,12 +58,9 @@ class PolizaControllerTest {
 
     @Test
     void obtenerPoliza_DeberiaRetornar200_CuandoPolizaExiste() {
-        // Given
         String polizaId = "POL-001";
         when(polizaService.obtenerPorId(polizaId))
                 .thenReturn(Mono.just(polizaResponse));
-
-        // When & Then
         webTestClient.get()
                 .uri("/api/polizas/{id}", polizaId)
                 .accept(MediaType.APPLICATION_JSON)
@@ -84,12 +78,11 @@ class PolizaControllerTest {
 
     @Test
     void obtenerPoliza_DeberiaRetornar404_CuandoPolizaNoExiste() {
-        // Given
+
         String polizaId = "POL-999";
         when(polizaService.obtenerPorId(polizaId))
                 .thenReturn(Mono.empty());
 
-        // When & Then
         webTestClient.get()
                 .uri("/api/polizas/{id}", polizaId)
                 .accept(MediaType.APPLICATION_JSON)
@@ -105,12 +98,10 @@ class PolizaControllerTest {
 
     @Test
     void obtenerPoliza_DeberiaRetornar500_CuandoOcurreError() {
-        // Given
         String polizaId = "POL-001";
         when(polizaService.obtenerPorId(polizaId))
                 .thenReturn(Mono.error(new RuntimeException("Error de base de datos")));
 
-        // When & Then
         webTestClient.get()
                 .uri("/api/polizas/{id}", polizaId)
                 .accept(MediaType.APPLICATION_JSON)
@@ -126,7 +117,7 @@ class PolizaControllerTest {
 
     @Test
     void obtenerPorDni_DeberiaRetornarListaPolizas_CuandoDniExiste() {
-        // Given
+
         String dni = "12345678";
         PolizasRequest poliza1 = new PolizasRequest("POL-001", "VIDA",
                 LocalDate.of(2024, 1, 1), LocalDate.of(2024, 12, 31), dni);
@@ -136,7 +127,6 @@ class PolizaControllerTest {
         when(polizaService.obtenerPorDni(dni))
                 .thenReturn(Flux.just(poliza1, poliza2));
 
-        // When & Then
         webTestClient.get()
                 .uri("/api/polizas?dni={dni}", dni)
                 .accept(MediaType.APPLICATION_JSON)
@@ -159,12 +149,12 @@ class PolizaControllerTest {
     }
     @Test
     void obtenerPorDni_DeberiaRetornarListaVacia_CuandoDniNoTienePolizas() {
-        // Given
+
         String dni = "87654321B";
         when(polizaService.obtenerPorDni(dni))
                 .thenReturn(Flux.empty());
 
-        // When & Then
+
         webTestClient.get()
                 .uri("/api/polizas?dni={dni}", dni)
                 .accept(MediaType.APPLICATION_JSON)
@@ -181,11 +171,10 @@ class PolizaControllerTest {
 
     @Test
     void crear_DeberiaRetornar201_CuandoPolizaEsCreadaExitosamente() throws Exception {
-        // Given
+
         when(polizaService.crearPoliza(any(PolizasRequest.class)))
                 .thenReturn(Mono.just(polizaResponse));
 
-        // When & Then
         webTestClient.post()
                 .uri("/api/polizas")
                 .contentType(MediaType.APPLICATION_JSON)
@@ -204,11 +193,11 @@ class PolizaControllerTest {
 
     @Test
     void crear_DeberiaRetornar500_CuandoOcurreErrorAlCrear() throws Exception {
-        // Given
+
         when(polizaService.crearPoliza(any(PolizasRequest.class)))
                 .thenReturn(Mono.error(new RuntimeException("Error al guardar en BD")));
 
-        // When & Then
+
         webTestClient.post()
                 .uri("/api/polizas")
                 .contentType(MediaType.APPLICATION_JSON)
@@ -225,6 +214,7 @@ class PolizaControllerTest {
 
     @Test
     void crear_DeberiaRetornar400_CuandoBodyEstaVacio() {
+
         webTestClient.post()
                 .uri("/api/polizas")
                 .contentType(MediaType.APPLICATION_JSON)
@@ -238,7 +228,7 @@ class PolizaControllerTest {
 
     @Test
     void crear_DeberiaRetornar400_CuandoJsonMalFormado() {
-        String invalidJson = "{ \"campo\": \"valor\" "; // Falta cierre de llave
+        String invalidJson = "{ \"campo\": \"valor\" ";
 
         webTestClient.post()
                 .uri("/api/polizas")
@@ -254,7 +244,7 @@ class PolizaControllerTest {
 
     @Test
     void crear_DeberiaAceptarPolizaConFechasValidas() throws Exception {
-        // Given
+
         PolizasRequest polizaFechasFuturas = new PolizasRequest(
                 null,
                 "HOGAR",
@@ -274,7 +264,7 @@ class PolizaControllerTest {
         when(polizaService.crearPoliza(any(PolizasRequest.class)))
                 .thenReturn(Mono.just(polizaRespuestaFuturas));
 
-        // When & Then
+
         webTestClient.post()
                 .uri("/api/polizas")
                 .contentType(MediaType.APPLICATION_JSON)
