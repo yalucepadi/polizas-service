@@ -9,6 +9,6 @@ public interface PolizaService {
     Mono<PolizasRequest> obtenerPorId(String id);
     Flux<PolizasRequest> obtenerPorDni(String dni);
     Mono<PolizasRequest> crearPoliza(PolizasRequest poliza);
-    Mono<Boolean> estaVigente(String id);
+
 
 }

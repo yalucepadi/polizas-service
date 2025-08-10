@@ -3,6 +3,7 @@ package com.ylcd.service.polizas_service.controller;
 import com.ylcd.service.polizas_service.model.request.PolizasRequest;
 import com.ylcd.service.polizas_service.model.response.ResponseGeneralDto;
 import com.ylcd.service.polizas_service.service.impl.PolizaServiceImpl;
+import com.ylcd.service.polizas_service.util.Constants;
 import com.ylcd.service.polizas_service.util.PolizaAdapter;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
@@ -35,19 +36,19 @@ public class PolizaController {
                     log.info("Póliza encontrada: {}", poliza);
                     return ResponseEntity.ok(
                             PolizaAdapter.responseGeneral(
-                                    "200", HttpStatus.OK.value(), "Póliza encontrada", poliza
+                                    Constants.HTTP_200, Constants.HTTP_200_code, "Póliza encontrada", poliza
                             )
                     );
                 })
                 .defaultIfEmpty(ResponseEntity.status(HttpStatus.NOT_FOUND)
                         .body(PolizaAdapter.responseGeneral(
-                                "404", HttpStatus.NOT_FOUND.value(), "Póliza no encontrada", null
+                                Constants.HTTP_404, Constants.HTTP_404_code, "Póliza no encontrada", null
                         )))
                 .onErrorResume(error -> {
                     log.error("Error al buscar póliza {}: {}", id, error.getMessage(), error);
                     return Mono.just(ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                             .body(PolizaAdapter.responseGeneral(
-                                    "500", HttpStatus.INTERNAL_SERVER_ERROR.value(),
+                                    Constants.HTTP_500, Constants.HTTP_500_code,
                                     "Error interno del servidor", error.getMessage()
                             )));
                 });
@@ -59,18 +60,21 @@ public class PolizaController {
 
         return service.obtenerPorDni(dni)
                 .map(poliza -> ResponseGeneralDto.<PolizasRequest>builder()
-                        .code("200")
+                        .code(Constants.HTTP_200)
+                        .status(Constants.HTTP_200_code)
                         .comment("Póliza obtenida correctamente")
                         .data(poliza)
                         .build()
                 )
                 .switchIfEmpty(Flux.just(ResponseGeneralDto.<PolizasRequest>builder()
-                        .code("404")
+                        .code(Constants.HTTP_404)
+                        .status(Constants.HTTP_404_code)
                         .comment("No se encontraron pólizas para el DNI: " + dni)
                         .data(null)
                         .build()))
                 .onErrorResume(e -> Flux.just(ResponseGeneralDto.<PolizasRequest>builder()
-                        .code("500")
+                        .code(Constants.HTTP_500)
+                        .status(Constants.HTTP_500_code)
                         .comment("Error interno del servidor: " + e.getMessage())
                         .data(null)
                         .build()));
@@ -85,14 +89,15 @@ public class PolizaController {
                     log.info("Póliza creada: {}", creada);
                     return ResponseEntity.status(HttpStatus.CREATED)
                             .body(PolizaAdapter.responseGeneral(
-                                    "201", HttpStatus.CREATED.value(), "Póliza creada con éxito", creada
+                                    Constants.HTTP_201, Constants.HTTP_201_code, "Póliza creada con éxito",
+                                    creada
                             ));
                 })
                 .onErrorResume(error -> {
                     log.error("Error creando póliza: {}", error.getMessage(), error);
                     return Mono.just(ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                             .body(PolizaAdapter.responseGeneral(
-                                    "500", HttpStatus.INTERNAL_SERVER_ERROR.value(),
+                                    Constants.HTTP_500, Constants.HTTP_500_code,
                                     "Error interno del servidor", error.getMessage()
                             )));
                 });

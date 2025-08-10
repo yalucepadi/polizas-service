@@ -5,17 +5,14 @@ import com.ylcd.service.polizas_service.service.PolizaService;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
-
 import java.time.LocalDate;
-import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 
 @Service
 public class PolizaServiceImpl implements PolizaService {
-    // ConcurrentHashMap para acceso thread-safe
+
     private final Map<String, PolizasRequest> polizas = new ConcurrentHashMap<>();
 
     @Override
@@ -38,11 +35,6 @@ public class PolizaServiceImpl implements PolizaService {
         return Mono.just(poliza);
     }
 
-    @Override
-    public Mono<Boolean> estaVigente(String id) {
-        return obtenerPorId(id)
-                .map(p -> LocalDate.now().isBefore(p.fechaFin()))
-                .defaultIfEmpty(false);
-    }
+
 
 }
