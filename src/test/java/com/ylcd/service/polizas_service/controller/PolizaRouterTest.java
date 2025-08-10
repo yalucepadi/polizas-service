@@ -24,7 +24,7 @@ import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
 @WebFluxTest(controllers = {PolizaHandler.class, PolizaRouter.class})
-class PolizaControllerTest {
+class PolizaRouterTest {
 
     @Autowired
     private WebTestClient webTestClient;
