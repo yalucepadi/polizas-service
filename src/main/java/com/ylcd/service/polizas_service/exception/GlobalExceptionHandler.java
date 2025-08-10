@@ -1,63 +1,61 @@
 package com.ylcd.service.polizas_service.exception;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import org.springframework.boot.web.reactive.error.ErrorWebExceptionHandler;
+import org.springframework.core.io.buffer.DataBuffer;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageNotReadableException;
+import org.springframework.stereotype.Component;
 import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.ResponseStatus;
+import org.springframework.web.server.ServerWebExchange;
+import reactor.core.publisher.Mono;
 
 import java.util.HashMap;
 import java.util.Map;
 
-@ControllerAdvice
-public class GlobalExceptionHandler {
+@Component
+public class GlobalExceptionHandler implements ErrorWebExceptionHandler {
 
-    @ExceptionHandler(PolizaException.class)
-    public ResponseEntity<ErrorResponse> handlePolizaException(PolizaException ex) {
-        ErrorResponse errorResponse = new ErrorResponse(
-                "Poliza Error", ex.getMessage(), HttpStatus.BAD_REQUEST.value());
-        return new ResponseEntity<>(errorResponse, HttpStatus.BAD_REQUEST);
-    }
+    private final ObjectMapper objectMapper = new ObjectMapper();
 
-    @ExceptionHandler(MethodArgumentNotValidException.class)
-    @ResponseStatus(HttpStatus.BAD_REQUEST)
-    public ResponseEntity<Map<String, String>> handleValidationExceptions(MethodArgumentNotValidException ex) {
-        Map<String, String> errors = new HashMap<>();
+    @Override
+    public Mono<Void> handle(ServerWebExchange exchange, Throwable ex) {
+        exchange.getResponse().getHeaders().setContentType(MediaType.APPLICATION_JSON);
 
-        ex.getBindingResult().getAllErrors().forEach((error) -> {
-            String fieldName = ((FieldError) error).getField();
-            String errorMessage = error.getDefaultMessage();
-            errors.put(fieldName, errorMessage);
-        });
+        HttpStatus status;
+        Object body;
 
-        return new ResponseEntity<>(errors, HttpStatus.BAD_REQUEST);
-    }
+        if (ex instanceof PolizaException) {
+            status = HttpStatus.BAD_REQUEST;
+            body = new ErrorResponse("Poliza Error", ex.getMessage(), status.value());
+        }
+        else if (ex instanceof org.springframework.web.server.ServerWebInputException) {
+            status = HttpStatus.BAD_REQUEST;
+            body = new ErrorResponse("Malformed JSON request", "El formato del JSON enviado no es válido", status.value());
+        }
+        else {
+            status = HttpStatus.INTERNAL_SERVER_ERROR;
+            body = new ErrorResponse("Server Error", ex.getMessage(), status.value());
+        }
 
-    // Manejo unificado para errores de JSON malformado
-    @ExceptionHandler({
-            HttpMessageNotReadableException.class,
-            org.springframework.web.server.ServerWebInputException.class
-    })
-    public ResponseEntity<ErrorResponse> handleJsonParseErrors(Exception ex) {
-        ErrorResponse errorResponse = new ErrorResponse(
-                "Malformed JSON request",
-                "El formato del JSON enviado no es válido",
-                HttpStatus.BAD_REQUEST.value()
-        );
-        return ResponseEntity.badRequest().body(errorResponse);
-    }
+        exchange.getResponse().setStatusCode(status);
 
-    // Handler genérico para cualquier otra excepción no manejada específicamente
-    @ExceptionHandler(Exception.class)
-    public ResponseEntity<ErrorResponse> handleGenericException(Exception ex) {
-        ErrorResponse errorResponse = new ErrorResponse(
-                "Server Error",
-                ex.getMessage(),
-                HttpStatus.INTERNAL_SERVER_ERROR.value()
-        );
-        return new ResponseEntity<>(errorResponse, HttpStatus.INTERNAL_SERVER_ERROR);
+        DataBuffer buffer;
+        try {
+            buffer = exchange.getResponse()
+                    .bufferFactory()
+                    .wrap(objectMapper.writeValueAsBytes(body));
+        } catch (JsonProcessingException e) {
+            return Mono.error(e);
+        }
+
+        return exchange.getResponse().writeWith(Mono.just(buffer));
     }
 }
