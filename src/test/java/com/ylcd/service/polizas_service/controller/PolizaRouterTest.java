@@ -2,6 +2,8 @@ package com.ylcd.service.polizas_service.controller;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
+import com.ylcd.service.polizas_service.controller.handler.PolizaHandler;
+import com.ylcd.service.polizas_service.controller.router.PolizaRouter;
 import com.ylcd.service.polizas_service.model.request.PolizasRequest;
 import com.ylcd.service.polizas_service.service.impl.PolizaServiceImpl;
 import org.junit.jupiter.api.BeforeEach;
@@ -21,8 +23,8 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
-@WebFluxTest(PolizaController.class)
-class PolizaControllerTest {
+@WebFluxTest(controllers = {PolizaHandler.class, PolizaRouter.class})
+class PolizaRouterTest {
 
     @Autowired
     private WebTestClient webTestClient;
@@ -163,7 +165,7 @@ class PolizaControllerTest {
                 .expectHeader().contentType(MediaType.APPLICATION_JSON)
                 .expectBody()
                 .jsonPath("$[0].code").isEqualTo("404")
-                .jsonPath("$[0].status").isEqualTo(null)
+                .jsonPath("$[0].status").isEqualTo(404)
                 .jsonPath("$[0].comment").isEqualTo("No se encontraron pólizas para el DNI: "+dni)
                 .jsonPath("$[0].data").isEqualTo(null);
     }
